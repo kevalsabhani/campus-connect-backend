@@ -13,8 +13,10 @@ import (
 	"github.com/kevalsabhani/campus-connect-backend/internal/config"
 )
 
+var Version = "1.0.0"
+
 func main() {
-	slog.Info("Campus Connect API", "version", "0.0.1")
+	slog.Info("Campus Connect API", "version", Version)
 
 	// Load config
 	cfg := config.MustLoad()

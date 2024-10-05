@@ -43,7 +43,7 @@ func MustLoad() *Config {
 	// Check the environment variable first
 	if configPath = os.Getenv("CONFIG_PATH"); configPath == "" {
 		// If the variable is not set, check the -config flag
-		configFlag := flag.String("config", "", "path to config file")
+		configFlag := flag.String("config", "config/local.yaml", "path to config file")
 		flag.Parse()
 
 		configPath = *configFlag
