@@ -63,7 +63,11 @@ func buildHandler() *mux.Router {
 	v1Router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+		err := json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+		if err != nil {
+			http.Error(w, "failed to encode response", http.StatusInternalServerError)
+			return
+		}
 	}).Methods("GET")
 
 	return r
