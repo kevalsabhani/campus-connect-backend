@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/kevalsabhani/campus-connect-backend/internal/config"
+	"github.com/kevalsabhani/campus-connect-backend/internal/db"
 )
 
 var Version = "1.0.0"
@@ -22,23 +25,19 @@ func main() {
 	cfg := config.MustLoad()
 
 	// Database setup
-
-	// setup router
-	r := mux.NewRouter()
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello World"))
-	}).Methods("GET")
+	db := db.InitDB(cfg.Database.Dsn)
+	defer db.Close()
 
 	server := &http.Server{
-		Addr:    cfg.Server.Host + ":" + cfg.Server.Port,
-		Handler: r,
+		Addr:    fmt.Sprintf(":%d", cfg.Server.Port),
+		Handler: buildHandler(),
 	}
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
 	go func() {
-		slog.Info("starting server", "host", cfg.Server.Host, "port", cfg.Server.Port)
+		slog.Info("starting server", "port", cfg.Server.Port)
 		if err := server.ListenAndServe(); err != nil {
 			slog.Error("failed to start server", "error", err)
 		}
@@ -46,7 +45,7 @@ func main() {
 
 	<-done
 	slog.Info("shutting down server")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
@@ -54,4 +53,18 @@ func main() {
 	}
 
 	slog.Info("server shutdown successfully")
+}
+
+func buildHandler() *mux.Router {
+	// setup router
+	r := mux.NewRouter()
+
+	v1Router := r.PathPrefix("/api/v1").Subrouter()
+	v1Router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	}).Methods("GET")
+
+	return r
 }

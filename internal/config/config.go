@@ -6,27 +6,39 @@ import (
 	"os"
 
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/kevalsabhani/campus-connect-backend/internal/errors"
 )
 
 // Config represents the application configuration
 type Config struct {
 	Database struct {
-		Host     string `yaml:"host" env:"DB_HOST" env-description:"Database host"`
-		Port     string `yaml:"port" env:"DB_PORT" env-description:"Database port"`
-		Name     string `yaml:"name" env:"DB_NAME" env-description:"Database name"`
-		User     string `yaml:"user" env:"DB_USER" env-description:"Database user"`
-		Password string `yaml:"password" env:"DB_PASSWORD" env-description:"Database password"`
+		Dsn string `yaml:"dsn" env:"DB_DSN" env-description:"Database DSN"`
 	} `yaml:"database"`
 
 	Server struct {
-		Host string `yaml:"host" env:"SERVER_HOST,HOST" env-description:"Server host"`
-		Port string `yaml:"port" env:"SERVER_PORT,PORT" env-description:"Server port"`
+		Port int `yaml:"port" env:"SERVER_PORT" env-description:"Server port"`
 	} `yaml:"server"`
 
 	Jwt struct {
 		Secret     string `yaml:"secret" env:"JWT_SECRET" env-description:"JWT secret"`
 		Expiration int64  `yaml:"expiration" env:"JWT_EXPIRATION" env-description:"JWT expiration"`
 	} `yaml:"jwt"`
+}
+
+func (c *Config) Validate() error {
+	if c.Database.Dsn == "" || c.Server.Port == 0 || c.Jwt.Secret == "" || c.Jwt.Expiration == 0 {
+		return errors.ErrEmptyConfig
+	}
+
+	if c.Server.Port < 0 || c.Server.Port > 65535 {
+		return errors.ErrInvalidPort
+	}
+
+	if c.Jwt.Expiration < 0 {
+		return errors.ErrInvalidExpiration
+	}
+
+	return nil
 }
 
 // MustLoad loads the configuration from the file specified by the CONFIG_PATH
@@ -62,6 +74,10 @@ func MustLoad() *Config {
 	// Read the config file
 	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
 		log.Fatalf("can not read config file: %s", err.Error())
+	}
+
+	if err := cfg.Validate(); err != nil {
+		log.Fatalf("invalid config: %s", err.Error())
 	}
 
 	return &cfg
