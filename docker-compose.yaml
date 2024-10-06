@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  db:
+    image: "postgres:alpine"
+    restart: always
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "secure_pass"
+      POSTGRES_DB: "campus_connect_db"
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
