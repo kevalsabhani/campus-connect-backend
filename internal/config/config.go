@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/ilyakaznacheev/cleanenv"
-	"github.com/kevalsabhani/campus-connect-backend/internal/errors"
+	"github.com/kevalsabhani/campus-connect-backend/pkg/errors"
 )
 
 // Config represents the application configuration
@@ -25,6 +25,7 @@ type Config struct {
 	} `yaml:"jwt"`
 }
 
+// Validate checks if the configuration is valid.
 func (c *Config) Validate() error {
 	if c.Database.Dsn == "" || c.Server.Port == 0 || c.Jwt.Secret == "" || c.Jwt.Expiration == 0 {
 		return errors.ErrEmptyConfig
@@ -43,9 +44,7 @@ func (c *Config) Validate() error {
 
 // MustLoad loads the configuration from the file specified by the CONFIG_PATH
 // environment variable. If the variable is not set, it checks the -config flag
-// and uses its value. If the flag is not set, it logs a fatal error.
-// If the file does not exist, it logs a fatal error.
-// If the file can not be read, it logs a fatal error.
+// and uses its value.
 func MustLoad() *Config {
 	var (
 		cfg        Config

@@ -4,9 +4,10 @@ services:
     image: "postgres:alpine"
     restart: always
     environment:
-      POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "secure_pass"
       POSTGRES_DB: "campus_connect_db"
+    networks:
+      - campus_connect_network
     ports:
       - "5432:5432"
     healthcheck:
@@ -14,3 +15,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+networks:
+  campus_connect_network:
+    driver: bridge
